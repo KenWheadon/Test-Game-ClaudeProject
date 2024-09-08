@@ -1,0 +1,100 @@
+.game-over-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    background-color: #f0f0f0;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    max-width: 600px;
+    margin: 20px auto;
+  }
+  
+  .game-over-screen h1 {
+    font-size: 36px;
+    color: #333;
+    margin-bottom: 20px;
+  }
+  
+  .stats, .monster-stats {
+    background-color: white;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    width: 100%;
+    text-align: center;
+  }
+  
+  .monster-stats h2 {
+    font-size: 24px;
+    color: #4CAF50;
+    margin-bottom: 10px;
+  }
+  
+  .upgrade-section {
+    width: 100%;
+    margin-bottom: 20px;
+  }
+  
+  .upgrade-section h2 {
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+  
+  .upgrade-buttons {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+  }
+  
+  .upgrade-button {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 15px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .upgrade-button:hover:not(:disabled) {
+    background-color: #45a049;
+  }
+  
+  .upgrade-button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+  }
+  
+  .upgrade-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  
+  .upgrade-cost {
+    font-weight: bold;
+  }
+  
+  .fight-again-button {
+    margin-top: 20px;
+    padding: 10px 20px;
+    font-size: 18px;
+    background-color: #008CBA;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .fight-again-button:hover {
+    background-color: #007B9A;
+  }

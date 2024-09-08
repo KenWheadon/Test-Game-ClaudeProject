@@ -1,0 +1,35 @@
+.monster {
+    animation: idle 2s ease-in-out infinite;
+  }
+  
+  .monster.attacking .monster-body {
+    animation: attack 0.5s ease-in-out;
+  }
+  
+  .monster .eye {
+    animation: blink 3s infinite;
+  }
+  
+  .monster .mouth {
+    animation: mouth-move 4s infinite;
+  }
+  
+  @keyframes idle {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+  }
+  
+  @keyframes attack {
+    0%, 100% { transform: translateX(0) rotate(0deg); }
+    50% { transform: translateX(5px) rotate(10deg); }
+  }
+  
+  @keyframes blink {
+    0%, 96%, 100% { transform: scaleY(1); }
+    98% { transform: scaleY(0.1); }
+  }
+  
+  @keyframes mouth-move {
+    0%, 100% { transform: scaleX(1); }
+    50% { transform: scaleX(0.8); }
+  }
