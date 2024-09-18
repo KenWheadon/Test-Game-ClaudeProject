@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Goblin vs. Knights</title>
+    <style>
+        body {
+            background-color: #222;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+        #game-container {
+            width: 800px;
+            margin: 0 auto;
+            padding-top: 50px;
+        }
+        .screen {
+            display: none;
+        }
+        /* Start Screen */
+        #start-screen h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+        /* Health Bars */
+        .hp-bar {
+            width: 100px;
+            height: 15px;
+            background-color: red;
+            margin: 5px auto;
+            border-radius: 5px;
+            overflow: hidden;
+            position: relative;
+        }
+        .hp-fill {
+            height: 100%;
+            background-color: green;
+            width: 100%;
+            transition: width 0.5s ease;
+        }
+        .hp-text {
+            position: absolute;
+            top: -15px;
+            left: 0;
+            font-size: 12px;
+            color: black;
+        }
+        #characters {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        svg {
+            width: 100px;
+            height: 100px;
+            margin: 0 50px;
+        }
+        .button {
+            background-color: #555;
+            border: none;
+            color: #fff;
+            padding: 15px 30px;
+            margin: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 5px;
+        }
+        .button:hover {
+            background-color: #777;
+        }
+        #gold-display {
+            font-size: 24px;
+            margin: 20px;
+        }
+        .upgrade-button {
+            display: block;
+            margin: 10px auto;
+            width: 250px;
+        }
+        #combat-history {
+            max-height: 200px;
+            overflow-y: auto;
+            text-align: left;
+            margin: 20px auto;
+            width: 600px;
+            background-color: #333;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .history-message {
+            margin: 5px 0;
+        }
+        .animate-attack {
+            animation: attackAnimation 0.5s;
+        }
+        @keyframes attackAnimation {
+            0% { transform: translateX(0); }
+            50% { transform: translateX(-20px); }
+            100% { transform: translateX(0); }
+        }
+        .defeated {
+            opacity: 0.5;
+        }
+        /* Dice Game */
+        #dice-game {
+            margin: 20px auto;
+        }
+        #dice-result {
+            font-size: 18px;
+            margin: 10px 0;
+        }
+        #dice-images {
+            display: flex;
+            justify-content: center;
+        }
+        .dice {
+            width: 50px;
+            height: 50px;
+            margin: 0 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <!-- Start Screen -->
+    <div id="start-screen" class="screen">
+        <h1>Goblin vs. Knights</h1>
+        <button class="button" onclick="goToUpgrade()">Start Game</button>
+    </div>
+
+    <!-- Battle Screen -->
+    <div id="battle-screen" class="screen">
+        <h1>Wave <span id="wave-number">1</span></h1>
+        <div id="characters">
+            <div>
+                <!-- Goblin SVG -->
+                <svg id="goblin">
+                    <circle cx="50" cy="50" r="40" fill="green" />
+                </svg>
+                <div class="hp-bar">
+                    <div class="hp-fill" id="goblin-hp-fill"></div>
+                    <div class="hp-text" id="goblin-hp-text"></div>
+                </div>
+            </div>
+            <div>
+                <!-- Knight SVG -->
+                <svg id="knight">
+                    <rect x="20" y="20" width="60" height="60" fill="grey" />
+                </svg>
+                <div class="hp-bar">
+                    <div class="hp-fill" id="knight-hp-fill"></div>
+                    <div class="hp-text" id="knight-hp-text"></div>
+                </div>
+            </div>
+        </div>
+        <button class="button" onclick="normalAttack()">Normal Attack</button>
+        <button class="button" onclick="powerAttack()">Power Attack</button>
+        <div id="combat-history">
+            <h2>Combat History</h2>
+            <div id="history-messages"></div>
+        </div>
+    </div>
+
+    <!-- Upgrade Screen -->
+    <div id="upgrade-screen" class="screen">
+        <h1>Upgrade Your Goblin</h1>
+        <div id="gold-display">Gold: <span id="gold-amount">0</span></div>
+        <button class="button upgrade-button" onclick="upgrade('hp')">Upgrade HP (Cost: <span id="hp-cost">10</span>)</button>
+        <button class="button upgrade-button" onclick="upgrade('power')">Upgrade Power (Cost: <span id="power-cost">10</span>)</button>
+        <button class="button upgrade-button" onclick="upgrade('critChance')">Upgrade Crit Chance (Cost: <span id="critChance-cost">10</span>)</button>
+        <button class="button upgrade-button" onclick="upgrade('critDamage')">Upgrade Crit Damage (Cost: <span id="critDamage-cost">10</span>)</button>
+        <button class="button" onclick="startBattle()">Start Battle</button>
+        <!-- Dice Game -->
+        <div id="dice-game">
+            <h2>Gambling Mini-Game</h2>
+            <p>Roll two dice for 1gp. If you roll doubles, you win 1gp × the value of the doubles rolled!</p>
+            <button class="button" onclick="playDiceGame()">Roll Dice (Cost: 1gp)</button>
+            <div id="dice-result"></div>
+            <div id="dice-images"></div>
+        </div>
+    </div>
+
+    <!-- Death Screen -->
+    <div id="death-screen" class="screen">
+        <h1>You Died!</h1>
+        <p>You reached wave <span id="final-wave">1</span>.</p>
+        <p>You earned <span id="earned-gold">0</span> gold.</p>
+        <button class="button" onclick="goToUpgrade()">Go to Upgrades</button>
+    </div>
+</div>
+
+<script>
+    // Game Variables
+    let gold = 0;
+    let wave = 1;
+    let goblin = {
+        maxHp: 10,
+        hp: 10,
+        power: 1,
+        critChance: 0.05,
+        critDamage: 1.5
+    };
+    let knight = {
+        maxHp: 10,
+        hp: 10,
+        power: 1
+    };
+    let upgradeCosts = {
+        hp: 10,
+        power: 10,
+        critChance: 10,
+        critDamage: 10
+    };
+    let actionQueue = [];
+    let isAnimating = false;
+
+    // Initialize Game
+    function initGame() {
+        hideAllScreens();
+        document.getElementById('start-screen').style.display = 'block';
+    }
+
+    // Hide All Screens
+    function hideAllScreens() {
+        const screens = document.getElementsByClassName('screen');
+        for (let screen of screens) {
+            screen.style.display = 'none';
+        }
+    }
+
+    // Start Battle
+    function startBattle() {
+        hideAllScreens();
+        document.getElementById('battle-screen').style.display = 'block';
+        goblin.hp = goblin.maxHp;
+        knight.maxHp = 5 + (wave - 1) * 5;
+        knight.hp = knight.maxHp;
+        knight.power = 1 + (wave - 1);
+        document.getElementById('wave-number').innerText = wave;
+        document.getElementById('history-messages').innerHTML = '';
+        document.getElementById('goblin').classList.remove('defeated');
+        document.getElementById('knight').classList.remove('defeated');
+        updateHpBars();
+    }
+
+    // Update HP Bars
+    function updateHpBars() {
+        document.getElementById('goblin-hp-fill').style.width = (goblin.hp / goblin.maxHp) * 100 + '%';
+        document.getElementById('goblin-hp-text').innerText = `${goblin.hp.toFixed(0)} / ${goblin.maxHp}`;
+        document.getElementById('knight-hp-fill').style.width = (knight.hp / knight.maxHp) * 100 + '%';
+        document.getElementById('knight-hp-text').innerText = `${knight.hp.toFixed(0)} / ${knight.maxHp}`;
+    }
+
+    // Add Message to Combat History
+    function addHistoryMessage(message) {
+        const historyDiv = document.getElementById('history-messages');
+        const messageElem = document.createElement('div');
+        messageElem.classList.add('history-message');
+        messageElem.innerText = message;
+        historyDiv.appendChild(messageElem);
+        historyDiv.scrollTop = historyDiv.scrollHeight;
+    }
+
+    // Normal Attack
+    function normalAttack() {
+        if (isAnimating) return;
+        actionQueue.push(() => {
+            isAnimating = true;
+            animateAttack('goblin');
+            let damage = goblin.power;
+            knight.hp -= damage;
+            addHistoryMessage(`Goblin hit a normal attack for ${damage.toFixed(2)} damage.`);
+            updateHpBars();
+            setTimeout(() => {
+                if (knight.hp <= 0) {
+                    addHistoryMessage('Knight defeated!');
+                    animateDefeat('knight');
+                    setTimeout(() => {
+                        wave++;
+                        startBattle();
+                        isAnimating = false;
+                        processQueue();
+                    }, 1000);
+                } else {
+                    knightTurn();
+                    isAnimating = false;
+                    processQueue();
+                }
+            }, 500);
+        });
+        processQueue();
+    }
+
+    // Power Attack
+    function powerAttack() {
+        if (isAnimating) return;
+        actionQueue.push(() => {
+            isAnimating = true;
+            if (Math.random() < 0.5) {
+                addHistoryMessage('Your power attack missed!');
+                knightTurn();
+                isAnimating = false;
+                processQueue();
+            } else {
+                animateAttack('goblin');
+                let damage = goblin.power * 2;
+                let crit = false;
+                if (Math.random() < goblin.critChance) {
+                    damage *= goblin.critDamage;
+                    crit = true;
+                }
+                knight.hp -= damage;
+                let message = `Goblin hit a power attack for ${damage.toFixed(2)} damage.`;
+                if (crit) message += ' Critical Hit!';
+                addHistoryMessage(message);
+                updateHpBars();
+                setTimeout(() => {
+                    if (knight.hp <= 0) {
+                        addHistoryMessage('Knight defeated!');
+                        animateDefeat('knight');
+                        setTimeout(() => {
+                            wave++;
+                            startBattle();
+                            isAnimating = false;
+                            processQueue();
+                        }, 1000);
+                    } else {
+                        knightTurn();
+                        isAnimating = false;
+                        processQueue();
+                    }
+                }, 500);
+            }
+        });
+        processQueue();
+    }
+
+    // Knight's Turn
+    function knightTurn() {
+        setTimeout(() => {
+            animateAttack('knight');
+            let damage = knight.power;
+            goblin.hp -= damage;
+            addHistoryMessage(`Knight hit a normal attack for ${damage.toFixed(2)} damage.`);
+            updateHpBars();
+            if (goblin.hp <= 0) {
+                addHistoryMessage('Goblin defeated!');
+                animateDefeat('goblin');
+                setTimeout(die, 1000);
+            }
+        }, 500);
+    }
+
+    // Die
+    function die() {
+        hideAllScreens();
+        document.getElementById('death-screen').style.display = 'block';
+        let goldEarned = 1 + (wave - 1) * (wave - 1);
+        gold += goldEarned;
+        document.getElementById('earned-gold').innerText = goldEarned;
+        document.getElementById('final-wave').innerText = wave - 1;
+        updateUpgradeScreen();
+        wave = 1;
+    }
+
+    // Go to Upgrade Screen
+    function goToUpgrade() {
+        hideAllScreens();
+        document.getElementById('upgrade-screen').style.display = 'block';
+        updateUpgradeScreen();
+    }
+
+    // Upgrade Function
+    function upgrade(stat) {
+        if (gold >= upgradeCosts[stat]) {
+            gold -= upgradeCosts[stat];
+            if (stat === 'critChance') {
+                goblin[stat] += 0.05;
+            } else if (stat === 'critDamage') {
+                goblin[stat] += 0.5;
+            } else {
+                goblin[stat] += 5;
+            }
+            upgradeCosts[stat] = Math.floor(upgradeCosts[stat] * 1.5);
+            updateUpgradeScreen();
+        } else {
+            addHistoryMessage('Not enough gold!');
+        }
+    }
+
+    // Update Upgrade Screen
+    function updateUpgradeScreen() {
+        document.getElementById('gold-amount').innerText = gold;
+        document.getElementById('hp-cost').innerText = upgradeCosts.hp;
+        document.getElementById('power-cost').innerText = upgradeCosts.power;
+        document.getElementById('critChance-cost').innerText = upgradeCosts.critChance;
+        document.getElementById('critDamage-cost').innerText = upgradeCosts.critDamage;
+    }
+
+    // Animate Attack
+    function animateAttack(character) {
+        let element = document.getElementById(character);
+        element.classList.add('animate-attack');
+        setTimeout(() => {
+            element.classList.remove('animate-attack');
+        }, 500);
+    }
+
+    // Animate Defeat
+    function animateDefeat(character) {
+        let element = document.getElementById(character);
+        element.classList.add('defeated');
+    }
+
+    // Process Action Queue
+    function processQueue() {
+        if (actionQueue.length > 0 && !isAnimating) {
+            let action = actionQueue.shift();
+            action();
+        }
+    }
+
+    // Dice Game Function
+    function playDiceGame() {
+        if (gold < 1) {
+            addHistoryMessage('Not enough gold to play!');
+            return;
+        }
+        gold -= 1;
+        updateUpgradeScreen();
+
+        // Roll Dice
+        let die1 = Math.floor(Math.random() * 6) + 1;
+        let die2 = Math.floor(Math.random() * 6) + 1;
+
+        // Display Dice Images
+        displayDiceImages(die1, die2);
+
+        // Check for Doubles
+        if (die1 === die2) {
+            let winnings = die1 * 1;
+            gold += winnings;
+            updateUpgradeScreen();
+            document.getElementById('dice-result').innerText = `You rolled doubles! You win ${winnings} gp!`;
+        } else {
+            document.getElementById('dice-result').innerText = `No luck this time. You rolled a ${die1} and a ${die2}.`;
+        }
+    }
+
+    // Display Dice Images
+    function displayDiceImages(die1, die2) {
+        const diceImagesDiv = document.getElementById('dice-images');
+        diceImagesDiv.innerHTML = '';
+
+        const die1Img = document.createElement('img');
+        die1Img.src = `https://upload.wikimedia.org/wikipedia/commons/${getDiceImage(die1)}`;
+        die1Img.classList.add('dice');
+        diceImagesDiv.appendChild(die1Img);
+
+        const die2Img = document.createElement('img');
+        die2Img.src = `https://upload.wikimedia.org/wikipedia/commons/${getDiceImage(die2)}`;
+        die2Img.classList.add('dice');
+        diceImagesDiv.appendChild(die2Img);
+    }
+
+    // Get Dice Image URL
+    function getDiceImage(number) {
+        const diceImages = {
+            1: '1/1b/Dice-1-b.svg',
+            2: '5/5f/Dice-2-b.svg',
+            3: 'b/b1/Dice-3-b.svg',
+            4: 'f/fd/Dice-4-b.svg',
+            5: '0/08/Dice-5-b.svg',
+            6: '2/26/Dice-6-b.svg'
+        };
+        return diceImages[number];
+    }
+
+    // Start the game on window load
+    window.onload = initGame;
+</script>
+
+</body>
+</html>
